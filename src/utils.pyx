@@ -3,7 +3,7 @@ cimport numpy as np
 from cvxopt import solvers
 cpdef Mobius(mu):
     """
-    Mobuis transform for a capacity!
+    Mobius transform for a capacity!
     """
     cdef int v = 0
     cdef int j = 0
