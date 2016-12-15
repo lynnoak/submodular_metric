@@ -21,9 +21,10 @@ cpdef MuInit(int n):
     cdef int mlen = pow(2,n)
     cdef np.ndarray[np.float64_t,ndim=1] mu = np.zeros(mlen,dtype=np.float64)
     return mu
-
+#to be implemented
 cpdef solve_lp(mu,x,AZ,bZ,AeqZ,beqZ):
     return mu
+#to be implemented
 cpdef solve_qp(mu,x,AZ,bZ,AeqZ,beqZ):
     return mu
 
