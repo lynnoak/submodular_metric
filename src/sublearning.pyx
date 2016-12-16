@@ -1,3 +1,4 @@
+# Author : Hoel Le Capitaine
 import numpy as np
 cimport numpy as np
 cpdef GetSimPair(Y, max_iter):
