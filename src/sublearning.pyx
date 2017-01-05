@@ -63,3 +63,4 @@ cpdef GenerateTriplets(Y,n,max_iter):
 cpdef GenerateConstraints(A,X,l=2):
 	V =((X[A[:,0]]-X[A[:,1]])**l,(X[A[:,0]]-X[A[:,2]])**l)
 	return V
+
