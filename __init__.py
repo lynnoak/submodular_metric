@@ -10,6 +10,7 @@ from math import log2
 import cvxopt as cvx
 from itertools import *
 
+from Submodular_tools import *
 
 def mafonction(x):
 	return x*x*x - x*x - 2
@@ -53,20 +54,20 @@ print(A)
 V =GenerateConstraints(A,X)
 print(V)
 
-
     
 A = GenrateSortedConstraints(V)
 print(A)
 
-#    
-#AZ = convexity(2**dim)
-#print(AZ)
-#A = np.row_stack((AZ,A))
-#b = np.hstack((np.zeros(dim),np.ones(number_of_constraints)))
-#print(b)
+    
+AZ = convexity(2**dim)
+print(AZ)
+
+AZ = cvx.matrix([A,AZ])
+b = np.hstack((np.zeros(dim),np.ones(number_of_constraints)))
+print(b)
 
 P = np.zeros(dim)
 q = np.ones(dim)
 
 
-cvx.solvers.qp(P,q,A,b)
+#cvx.solvers.qp(P,q,A,b)
