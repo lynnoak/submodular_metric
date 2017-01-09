@@ -36,3 +36,13 @@ def GenrateSortedConstraints(V):
         A[i,sum(perm[j+1:])] += A2[i,pp[j]]
     A = cvx.matrix(A)
     return A
+    
+#def GenrateMLConstraints(V):
+#    A1 = V[0]
+#    A2 = V[1]
+#    n = len(A1)
+#    dim = len(A1[0])
+#    A = np.zeros((n,2**dim), dtype = np.float64)
+#    for i in range(n):
+#        
+    

@@ -54,7 +54,6 @@ print(A)
 V =GenerateConstraints(A,X)
 print(V)
 
-    
 A = GenrateSortedConstraints(V)
 print(A)
 
@@ -62,12 +61,19 @@ print(A)
 AZ = convexity(2**dim)
 print(AZ)
 
-AZ = cvx.matrix([A,AZ])
-b = np.hstack((np.zeros(dim),np.ones(number_of_constraints)))
-print(b)
+G = cvx.matrix([A,AZ],tc = 'd')
 
-P = np.zeros(dim)
-q = np.ones(dim)
+a = 0.5
+m = 1
+
+P = 2*(1-a)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
+q = cvx.matrix(a,(2**dim,1))
+bc = cvx.matrix(m,(number_of_constraints,1))
+[t,t1] = AZ.size
+bs = cvx.matrix(0.0,(t,1))
+h = cvx.matrix([bc,bs])
 
 
-#cvx.solvers.qp(P,q,A,b)
+s = cvx.solvers.qp(P,q,G,h)
+mu = s['x']
+print(mu)
