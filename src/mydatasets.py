@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn import datasets, preprocessing
-localrep ="/Users/lynnoak/Documents/work/submodular/submodular_metric/data/" 
+localrep ="../data/" 
 
 def seeds_data():
 	file=localrep+"seeds.data"

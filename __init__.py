@@ -12,8 +12,8 @@ from math import log2
 import cvxopt as cvx
 from sklearn import *
 from itertools import *
-
-#from Submodular_tools import *
+from constraints_tools import *
+from metric_computation import *
 
 #def mafonction(x):
 #	return x*x*x - x*x - 2
@@ -83,3 +83,6 @@ h = cvx.matrix([bc,bs])
 s = cvx.solvers.qp(P,q,G,h)
 mu = s['x']
 print(mu)
+
+K = 3
+score = ComputeScore(X,Y,K,dim,mu,ChoMetric,1)
