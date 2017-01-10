@@ -1,26 +1,29 @@
+import sys
+sys.path.append("./src")
+
 from genutils import *
 from base import *
 from sublearning import *
 import numpy as np
 import timeit
 
-from capacity_parameters import *
 from mydatasets import *
 from math import log2
 import cvxopt as cvx
+from sklearn import *
 from itertools import *
 
-from Submodular_tools import *
+#from Submodular_tools import *
 
-def mafonction(x):
-	return x*x*x - x*x - 2
-
-
-def timer(call):
-	start_time = timeit.default_timer()
-	call
-	print(timeit.default_timer() - start_time)
-
+#def mafonction(x):
+#	return x*x*x - x*x - 2
+#
+#
+#def timer(call):
+#	start_time = timeit.default_timer()
+#	call
+#	print(timeit.default_timer() - start_time)
+#
 
 #timer(Bisection(1,2,mafonction,100))
 
@@ -43,27 +46,30 @@ def timer(call):
 #V =GenerateConstraints(A,X)
 #print(V)
 
-X,Y = seeds_data()
+X,Y = balance_data()
+X = preprocessing.scale(X)
+m = preprocessing.MinMaxScaler()
+X = m.fit_transform(X)  
 
 dim = len(X[0])
 
-number_of_constraints = 10
+number_of_constraints = 100
 max_iter = 30
 A=GenerateTriplets(Y,number_of_constraints, max_iter)
-print(A)
+#print(A)
 V =GenerateConstraints(A,X)
-print(V)
+#print(V)
 
 A = GenrateSortedConstraints(V)
-print(A)
+#print(A)
 
     
-AZ = convexity(2**dim)
-print(AZ)
+AZ = k_additivity(2**dim,k=3)
+#print(AZ)
 
 G = cvx.matrix([A,AZ],tc = 'd')
 
-a = 0.5
+a = 0.3
 m = 1
 
 P = 2*(1-a)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))

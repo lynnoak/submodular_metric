@@ -51,4 +51,3 @@ cpdef ChoquetPerm(x, mu):
     perm_vector = [p[i] for i in argsort(perm)]
     return perm_vector
     
-    
