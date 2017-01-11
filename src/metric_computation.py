@@ -79,3 +79,26 @@ def ComputeScore(X,Y,K,dim,v,metric,pnorm):
     print(score_my)
     print("Accuracy of myKNN: %0.2f (+/- %0.2f)" % (score_my.mean(), score_my.std()))  
     return score_my.mean(),score_my.std()
+
+def ComputeKNNScore(X,Y,K,pnorm):
+    """
+    compute the cross validation score of the KNN as Control
+    Input: "X,Y" the dataset
+        "K" K of KNN alg
+         "pnorm" the power of the norm
+    Output: the mean and std of KNNscore 
+        
+    """
+    
+    #data preprocessing
+    X = preprocessing.scale(X)
+    m = preprocessing.MinMaxScaler()
+    X = m.fit_transform(X)  
+
+    KNN = KNeighborsClassifier(n_neighbors=K,p= pnorm)
+    KNN.fit(X,Y)
+    print(KNN.predict_proba(X[1]))
+    score_KNN = cross_validation.cross_val_score(KNN,X,Y,cv=5)
+    print(score_KNN)
+    print("Accuracy of KNN: %0.2f (+/- %0.2f)" % (score_KNN.mean(), score_KNN.std()))  
+    return score_KNN.mean(),score_KNN.std()

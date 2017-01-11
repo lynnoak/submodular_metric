@@ -11,6 +11,7 @@ import numpy as np
 import timeit
 import cvxopt as cvx
 from itertools import *
+from math import *
 
 
 def GenrateSortedConstraints(V):

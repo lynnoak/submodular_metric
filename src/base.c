@@ -2535,7 +2535,6 @@ static PyObject *__pyx_f_4base_ChoquetPerm(PyObject *__pyx_v_x, PyObject *__pyx_
  *     perm_vector = [p[i] for i in argsort(perm)]
  *     return perm_vector             # <<<<<<<<<<<<<<
  * 
- * 
  */
   __Pyx_XDECREF(__pyx_r);
   __Pyx_INCREF(__pyx_v_perm_vector);
