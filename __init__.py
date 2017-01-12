@@ -55,119 +55,129 @@ from sklearn.decomposition import PCA
 Test for the functions
 """
 
-
-X,Y = iono_data()
-X = preprocessing.scale(X)
-m = preprocessing.MinMaxScaler()
-X = m.fit_transform(X)  
-
-dim = len(X[0])
-
-number_of_constraints = 100
-max_iter = 30
-A=GenerateTriplets(Y,number_of_constraints, max_iter)
-#print(A)
-print("GT is ok")
-V =GenerateConstraints(A,X)
-#print(V)
-
-A = GenrateSortedConstraints(V)
-#print(A)
-print("A is ok")
-
-#AZ = convexity(2**dim)    
-AZ = k_additivity(2**dim,k=3)
-#print(AZ)
-print("AZ is ok")
-
-G = cvx.matrix([A,AZ],tc = 'd')
-
-
-a = 0.3
-m = 1.0
-
-P = 2*(1-a)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
-q = cvx.matrix(a,(2**dim,1))
-bc = cvx.matrix(m,(number_of_constraints,1))
-[t,t1] = AZ.size
-bs = cvx.matrix(0.0,(t,1))
-h = cvx.matrix([bc,bs])
-
-
-s = cvx.solvers.qp(P,q,G,h)
-mu = s['x']
-print(mu.T)
-
-K = 3
-score = ComputeScore(X,Y,K,dim,mu,ChoMetric,1)
-
-KNN_score = ComputeKNNScore(X,Y,K,1)
+#
+#X,Y = iono_data()
+#
+##reduce the instance 
+#n = max(len(X),300)
+#X,Y = X[0:n],Y[0:n]
+#
+#
+##reduce the dimension
+#PCAK = 8
+#if  (len(X[0])>PCAK ) :
+#    pca = PCA(n_components=PCAK)
+#    X = pca.fit_transform(X)
+#
+#print("pca is ok")
+#
+#X = preprocessing.scale(X)
+#m = preprocessing.MinMaxScaler()
+#X = m.fit_transform(X)  
+#
+#dim = len(X[0])
+#
+#number_of_constraints = 100
+#max_iter = 30
+#A=GenerateTriplets(Y,number_of_constraints, max_iter)
+##print(A)
+#V =GenerateConstraints(A,X)
+##print(V)
+#
+#A = GenrateSortedConstraints(V)
+##print(A)
+#print("A is ok")
+#
+##AZ = convexity(2**dim)    
+#AZ = k_additivity(2**dim,k=3)
+##print(AZ)
+#print("AZ is ok")
+#
+#G = cvx.matrix([A,AZ],tc = 'd')
+#
+#
+#a = 0.3
+#m = 1.0
+#
+#P = 2*(1-a)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
+#q = cvx.matrix(a,(2**dim,1))
+#bc = cvx.matrix(m,(number_of_constraints,1))
+#[t,t1] = AZ.size
+#bs = cvx.matrix(0.0,(t,1))
+#h = cvx.matrix([bc,bs])
+#
+#
+#s = cvx.solvers.qp(P,q,G,h)
+#mu = s['x']
+#print(mu.T)
+#
+#K = 3
+#score = ComputeScore(X,Y,K,dim,mu,ChoMetric,1)
+#
+#KNN_score = ComputeKNNScore(X,Y,K,1)
 
 
 """
 Test for show the result
 """
 
-#
-#myLoadData=[balance_data(),seeds_data(),wine_data(),iono_data(),sonar_data()]
-#SKNN = []
-#stdSKNN = []
-#SCho = []
-#stdSCho = []
-#
-#
-#
-#for i in myLoadData:
-#    X,Y = i
-#    
-#    #reduce the instance 
-#    n = max(len(X),300)
-#    X,Y = X[0:n],Y[0:n]
-#
-#       
-#    #reduce the dimension
-#    PCAK = 20
-#    if  (len(X[0])>PCAK ) :
-#        pca = PCA(n_components=PCAK)
-#        X = pca.fit_transform(X)
-#
-#
-#    X = preprocessing.scale(X)
-#    m = preprocessing.MinMaxScaler()
-#    X = m.fit_transform(X)
-# 
-#    dim = len(X[0])
-#    number_of_constraints = 100
-#    max_iter = 30
-#    A=GenerateTriplets(Y,number_of_constraints, max_iter)
-#    V =GenerateConstraints(A,X)
-#    A = GenrateSortedConstraints(V)
-#    AZ = convexity(2**dim)
-#    #AZ = k_additivity(2**dim,k=2)
-#    G = cvx.matrix([A,AZ],tc = 'd')
-#    
-#    a = 0.3
-#    P = 2*(1-a)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
-#    q = cvx.matrix(a,(2**dim,1))
-#    
-#    m = 1.0
-#    bc = cvx.matrix(m,(number_of_constraints,1))
-#    [t,t1] = AZ.size
-#    bs = cvx.matrix(0.0,(t,1))
-#    h = cvx.matrix([bc,bs])
-#    s = cvx.solvers.qp(P,q,G,h)
-#    mu = s['x']
-#    print(mu.T)
-#    
-#    K = 3
-#    mean,std = ComputeScore(X,Y,K,dim,mu,ChoMetric,1)
-#    SCho.append(mean)
-#    stdSCho.append(std) 
-#    
-#    mean,std = ComputeKNNScore(X,Y,K,1)
-#    SKNN.append(mean)
-#    stdSKNN.append(std)
-#    
-#ShowBar(SKNN,stdSKNN,SCho,stdSCho)
-#
-#    
+
+myLoadData=[balance_data(),seeds_data(),wine_data(),iono_data(),sonar_data()]
+SKNN = []
+stdSKNN = []
+SCho = []
+stdSCho = []
+
+
+
+for i in myLoadData:
+    X,Y = i
+    
+
+       
+    #reduce the dimension
+    PCAK = 8
+    if  (len(X[0])>PCAK ) :
+        pca = PCA(n_components=PCAK)
+        X = pca.fit_transform(X)
+
+
+    X = preprocessing.scale(X)
+    m = preprocessing.MinMaxScaler()
+    X = m.fit_transform(X)
+ 
+    dim = len(X[0])
+    number_of_constraints = 100
+    max_iter = 30
+    A=GenerateTriplets(Y,number_of_constraints, max_iter)
+    V =GenerateConstraints(A,X)
+    A = GenrateSortedConstraints(V)
+    #AZ = convexity(2**dim)
+    AZ = k_additivity(2**dim,k=2)
+    G = cvx.matrix([A,AZ],tc = 'd')
+    
+    a = 0.3
+    P = 2*(1-a)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
+    q = cvx.matrix(a,(2**dim,1))
+    
+    m = 1.0
+    bc = cvx.matrix(m,(number_of_constraints,1))
+    [t,t1] = AZ.size
+    bs = cvx.matrix(0.0,(t,1))
+    h = cvx.matrix([bc,bs])
+    s = cvx.solvers.qp(P,q,G,h)
+    mu = s['x']
+    print(mu.T)
+    
+    K = 3
+    mean,std = ComputeScore(X,Y,K,dim,mu,ChoMetric,1)
+    SCho.append(mean)
+    stdSCho.append(std) 
+    
+    mean,std = ComputeKNNScore(X,Y,K,1)
+    SKNN.append(mean)
+    stdSKNN.append(std)
+    
+ShowBar(SKNN,stdSKNN,SCho,stdSCho,title='test for kadd-2')
+
+    
