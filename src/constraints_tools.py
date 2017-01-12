@@ -103,3 +103,5 @@ def k_additivity(m,k):
             j = j+1
     A = cvx.spmatrix(x,I,J)
     return A  
+    
+ 

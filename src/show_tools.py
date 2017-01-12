@@ -10,7 +10,7 @@ from metric_computation import *
 import matplotlib.pyplot as plt
 
 
-def ShowBar(SKNN,stdSKNN,SCho,stdSCho,SMul = None ,stdSMul = None,title = 'test'):
+def ShowBar(SKNN,stdSKNN,SCho,stdSCho,SMul = None ,stdSMul = None,n1 = 'SKNN',n2 = 'SCho',n3 = 'SMul',title = 'test'):
     """
     Show and save the result 
     Input: "SKNN,stdSKNN,SCho,stdSCho,SMul,stdSMul" The mean and std of Scores 
@@ -28,26 +28,26 @@ def ShowBar(SKNN,stdSKNN,SCho,stdSCho,SMul = None ,stdSMul = None,title = 'test'
                      color='g',
                      error_kw=error_config,
                      yerr = stdSKNN, 
-                     label='SKNN')  
+                     label=n1)  
 
     rects2 = plt.bar(index + bar_width, SCho, bar_width,
                      alpha=opacity,
                      color='r',
                      error_kw=error_config,
                      yerr = stdSCho, 
-                     label='SCho')
+                     label=n2)
     if(SMul):
         rects3 = plt.bar(index + 2*bar_width, SMul, bar_width,
              alpha=opacity,
              color='b',
              error_kw=error_config,
              yerr = stdSMul, 
-             label='SMul')                 
+             label=n3)                 
 
     plt.xlabel("Datasets")
     plt.ylabel("Score of cross validation")
     plt.title(title)
-    plt.xticks(index + bar_width, ('seeds','sonar','iono','iris','wine'))
+    plt.xticks(index + bar_width, ('balance','seeds','wine','iono','sonar'))
     plt.xlim(0,nData+2)
     plt.legend()
     plt.tight_layout()

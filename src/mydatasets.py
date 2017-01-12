@@ -1,6 +1,6 @@
 import numpy as np
 from sklearn import datasets, preprocessing
-localrep ="../data/" 
+localrep ="./data/" 
 
 def seeds_data():
 	file=localrep+"seeds.data"
