@@ -95,7 +95,7 @@ def ComputeKNNScore(X,Y,K,pnorm):
     m = preprocessing.MinMaxScaler()
     X = m.fit_transform(X)  
 
-    KNN = KNeighborsClassifier(n_neighbors=K,p= pnorm)
+    KNN = KNeighborsClassifier(n_neighbors=K,p=pnorm)
     KNN.fit(X,Y)
     print(KNN.predict_proba(X[1]))
     score_KNN = cross_validation.cross_val_score(KNN,X,Y,cv=5)

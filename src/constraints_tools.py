@@ -15,8 +15,8 @@ from math import *
 
 
 def GenrateSortedConstraints(V):
-    A1 = V[0]
-    A2 = V[1]
+    A1 = abs(V[0])
+    A2 = abs(V[1])
     n = len(A1)
     dim = len(A1[0])
     A = np.zeros((n,2**dim), dtype = np.float64)
