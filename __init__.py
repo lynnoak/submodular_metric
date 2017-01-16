@@ -8,6 +8,7 @@ import numpy as np
 import timeit
 
 from mydatasets import *
+
 from math import log2
 import cvxopt as cvx
 from sklearn import *
@@ -87,7 +88,7 @@ Test for the functions
 #print('A')
 #
 ##AZ = convexity(2**dim)    
-#AZ = k_additivity(2**dim,k=3)
+#AZ = k_additivity(2**dim,3)
 #AZ = cvx.matrix(AZ)
 #bs = cvx.matrix(0.0,(np.shape(AZ)[0],1))
 ##print(AZ)
@@ -123,81 +124,102 @@ Test for the functions
 Test for show the result
 """
 
-
-myLoadData=[balance_data(),seeds_data(),wine_data(),iono_data(),sonar_data()]
-OrgKNN = []
-stdOrgKNN = []
-Choq = []
-stdChoq = []
-S_LMNN = []
-stdS_LMNN = []
-
-
-for i in myLoadData:
-    X,Y = i
-    pnorm = 2
-
-       
-    #reduce the dimension
-    PCAK = 8
-    if  (len(X[0])>PCAK ) :
-        pca = PCA(n_components=PCAK)
-        X = pca.fit_transform(X)
-
-
-    X = preprocessing.scale(X)
-    m = preprocessing.MinMaxScaler()
-    X = m.fit_transform(X)
- 
-    dim = len(X[0])
-    number_of_constraints = 100
-    max_iter = 30
-    A=GenerateTriplets(Y,number_of_constraints, max_iter)
-    V =GenerateConstraints(A,X,pnorm)
-    A = GenrateSortedConstraints(V)
-    m = 1.0
-    bc = cvx.matrix(m,(number_of_constraints,1))
-
+def main (p = 1,style = 1):
+    myLoadData=[glass_data(),balance_data(),iono_data(),sonar_data(),digits_data()]
+    OrgKNN = []
+    stdOrgKNN = []
+    Choq = []
+    stdChoq = []
+    S_LMNN = []
+    stdS_LMNN = []  
     
-    AZ = convexity(2**dim)
-    #AZ = k_additivity(2**dim,k=min(3,dim-1))
-    AZ = cvx.matrix(AZ)
-    bs = cvx.matrix(0.0,(np.shape(AZ)[0],1))
-    
-#    AP = cvx.matrix([(-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim)),
-#                     cvx.spmatrix(1.0, range(2**dim), range(2**dim))])
-#    bp = cvx.matrix([cvx.matrix(0.0,(2**dim,1)),cvx.matrix(1.0,(2**dim,1))])
-    
-#    AP = (-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
-#    bp = cvx.matrix(0.0,(2**dim,1))
-    
-    a = 0.3
-    P = 2*(1-a)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
-    q = cvx.matrix(a,(2**dim,1))
-#    G = cvx.matrix([A,AZ,AP],tc = 'd')    
-#    h = cvx.matrix([bc,bs,bp])
-    G = cvx.matrix([A,AZ],tc = 'd')    
-    h = cvx.matrix([bc,bs])
-    s = cvx.solvers.qp(P,q,G,h)
-    mu = s['x']
-    print(mu.T)
-    
-    K = 3
-    mean,std = ComputeScore(X,Y,K,dim,mu,ChoMetric,pnorm)
-    Choq.append(mean)
-    stdChoq.append(std) 
-    
-    mean,std = ComputeKNNScore(X,Y,K,pnorm)
-    OrgKNN.append(mean)
-    stdOrgKNN.append(std)
-    
-    lmnn = LMNN(k=5, learn_rate=1e-6)
-    lmnn.fit(X,Y)
-    XL = lmnn.transform(X)
-    mean,std = ComputeKNNScore(XL,Y,K,pnorm)
-    S_LMNN.append(mean)
-    stdS_LMNN.append(std)
-   
-ShowBar(OrgKNN,stdOrgKNN,Choq,stdChoq,S_LMNN,stdS_LMNN,title='test for convexity,p = 2')
 
+    for i in myLoadData:
+        X,Y = i
+        pnorm = p   
+
+           
+        #reduce the dimension
+        PCAK = 8
+        if  (len(X[0])>PCAK ) :
+            pca = PCA(n_components=PCAK)
+            X = pca.fit_transform(X)    
     
+
+        X = preprocessing.scale(X)
+        m = preprocessing.MinMaxScaler()
+        X = m.fit_transform(X)
+     
+        dim = len(X[0])
+        number_of_constraints = 200
+        max_iter = 50
+        A=GenerateTriplets(Y,number_of_constraints, max_iter)
+        V =GenerateConstraints(A,X,pnorm)
+        A = GenrateSortedConstraints(V)
+        m = 1.0
+        bc = cvx.matrix(m,(number_of_constraints,1))    
+
+        
+        if style == 1 :
+            AZ = convexity(2**dim)
+        else:
+            AZ = k_additivity(2**dim,min(3,dim-1))
+        AZ = cvx.matrix(AZ)
+        bs = cvx.matrix(0.0,(np.shape(AZ)[0],1))
+        
+    #    AP = cvx.matrix([(-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim)),
+    #                     cvx.spmatrix(1.0, range(2**dim), range(2**dim))])
+    #    bp = cvx.matrix([cvx.matrix(0.0,(2**dim,1)),cvx.matrix(1.0,(2**dim,1))])
+        
+        AP = (-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
+        bp = cvx.matrix(0.0,(2**dim,1))
+        
+        a = 0.3
+        P = 2*(1-a)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
+        q = cvx.matrix(a,(2**dim,1))
+        G = cvx.matrix([A,AZ],tc = 'd')    
+        h = cvx.matrix([bc,bs])
+        G = cvx.matrix([A,AZ,AP],tc = 'd')    
+        h = cvx.matrix([bc,bs,bp])
+        s = cvx.solvers.qp(P,q,G,h)
+        mu = s['x']
+        print(mu.T)
+        
+        #reduce the instance 
+        n = max(len(X),500)
+        X,Y = X[0:n],Y[0:n]
+        
+        K = 3
+        mean,std = ComputeScore(X,Y,K,dim,mu,ChoMetric,pnorm)
+        Choq.append(mean)
+        stdChoq.append(std) 
+        
+        mean,std = ComputeKNNScore(X,Y,K,pnorm)
+        OrgKNN.append(mean)
+        stdOrgKNN.append(std)
+        
+        lmnn = LMNN(k=5, learn_rate=1e-6)
+        lmnn.fit(X,Y)
+        XL = lmnn.transform(X)
+        mean,std = ComputeKNNScore(XL,Y,K,pnorm)
+        S_LMNN.append(mean)
+        stdS_LMNN.append(std)
+
+        if style == 1 :
+            title = 'test for convexity,p = '+str(pnorm)
+        else:
+            title = 'test for kadd-3,p ='+str(pnorm)
+            AZ = k_additivity(2**dim,min(3,dim-1))
+        ShowBar(OrgKNN,stdOrgKNN,Choq,stdChoq,S_LMNN,stdS_LMNN,title)
+        
+        print("mean of OrgKNN",np.mean(OrgKNN))
+        print("mean of Choq",np.mean(Choq))
+        print("mean of S_LMNN",np.mean(S_LMNN)) 
+
+    return OrgKNN,stdOrgKNN,Choq,stdChoq,S_LMNN,stdS_LMNN
+
+
+main(1,1)
+main(1,2)
+main(2,1)
+main(2,2)

@@ -5,13 +5,13 @@ localrep ="./data/"
 def seeds_data():
 	file=localrep+"seeds.data"
 	X = np.genfromtxt(file,delimiter=",")
-	x=X[:,][:,0:7]
+	x=X[:,][:,0:6]
 	y=X[:,][:,7]
 	return x,y
 def sonar_data():
 	file=localrep+"sonar.data"
 	X = np.genfromtxt(file,delimiter=",")
-	x=X[:,][:,0:60]
+	x=X[:,][:,0:59]
 	y=X[:,][:,60]
 	return x,y
 def digits_data():
@@ -20,7 +20,7 @@ def digits_data():
 def iono_data():
 	file =localrep+"ionosphere.data"
 	X = np.genfromtxt(file,delimiter=",")
-	x=X[:,][:,0:34]
+	x=X[:,][:,0:33]
 	y=X[:,][:,34]
 	return x,y
 def iris_data():
@@ -38,3 +38,18 @@ def wine_data():
 	x=X[:,][:,1:13]
 	y=X[:,][:,0]
 	return preprocessing.scale(x),y
+def bci_data():
+	file=localrep+"breast-cancer-wisconsin.data"
+	X = np.genfromtxt(file,delimiter=",")
+	x=X[:,][:,1:9]
+	y=X[:,][:,10]
+	return x,y 
+def glass_data():
+	file=localrep+"glass.data"
+	X = np.genfromtxt(file,delimiter=",")
+	x=X[:,][:,1:9]
+	y=X[:,][:,10]
+	return x,y 
+
+
+   
