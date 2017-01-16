@@ -62,11 +62,6 @@ def ComputeScore(X,Y,K,dim,v,metric,pnorm):
     Output: the mean and std of score 
         
     """
-
-    #data preprocessing
-    X = preprocessing.scale(X)
-    m = preprocessing.MinMaxScaler()
-    X = m.fit_transform(X)  
        
     #KNN with the metric 
     myKNN = KNeighborsClassifier(n_neighbors=K, 
@@ -89,11 +84,6 @@ def ComputeKNNScore(X,Y,K,pnorm):
     Output: the mean and std of KNNscore 
         
     """
-    
-    #data preprocessing
-    X = preprocessing.scale(X)
-    m = preprocessing.MinMaxScaler()
-    X = m.fit_transform(X)  
 
     KNN = KNeighborsClassifier(n_neighbors=K,p=pnorm)
     KNN.fit(X,Y)
