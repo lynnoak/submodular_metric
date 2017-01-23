@@ -47,7 +47,7 @@ def ShowBar(OrgKNN,stdOrgKNN,Choq,stdChoq,S_LMNN = None ,stdS_LMNN = None,n1 = '
     plt.xlabel("Datasets")
     plt.ylabel("Score of cross validation")
     plt.title(title)
-    plt.xticks(index + bar_width, ('glass','balance','iono','sonar','digits'))
+    plt.xticks(index + bar_width, ('glass','iono','sonar','digits'))
     plt.xlim(0,nData+2)
     plt.ylim(0,1)
     plt.legend()
