@@ -44,7 +44,7 @@ def GenrateSortedConstraints(V):
 #        
   
 
-def convexity(m):
+def submodular(m):
     """
     Input: m = 2^dim. 
     Output: matrix with v(AuB) + v(AnB) - v(A) - v(B) for all A,B \in N
