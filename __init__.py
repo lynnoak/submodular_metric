@@ -106,57 +106,58 @@ def ChoqQP(X,Y,style,p,K):
 test
 """
 
-#
-#K = 5#K for knn
-#X,Y = iono_data()
-##reduce the dimension
-##PCAK = 12
-##if  (len(X[0])>PCAK ) :
-##    pca = PCA(n_components=PCAK)
-##    X = pca.fit_transform(X)	
-#
-#
-#s0 = clock()
-#
-#Mah_score = ComputeKNNScore(X,Y,K,1)	
-#s1 = clock()
-#print('OrgKNN p1 time is ',s1-s0)
-#s0 = s1
-#
-#Eud_score = ComputeKNNScore(X,Y,K,2)	
-#s1 = clock()
-#print('OrgKNN p2 time is ',s1-s0)
-#s0 = s1
-#
-#style = 0
-#
-#Chq_1_score = ChoqQP(X,Y,style,1,K)
-#s1 = clock()
-#print('ChqKNN p1 time is ',s1-s0)
-#s0 =s1
-#
-#s0 = s1
-#Chq_1_score = ChoqQP(X,Y,style,2,K)
-#s1 = clock()
-#print('ChqKNN p2 time is ',s1-s0)
-#s0 =s1
-#
-#lmnn = LMNN(k=5, learn_rate=1e-6)
-#lmnn.fit(X,Y)
-#XL = lmnn.transform(X)
-#S_LMNN = ComputeKNNScore(XL,Y,K,2)
-#s1 = clock()
-#print('lmnnKNN time is ',s1-s0)
-#s0 =s1
-#
-#itml = ITML_Supervised(num_constraints=200)
-#itml.fit(X,Y)
-#XI = itml.transform(X)
-#S_ITML = ComputeKNNScore(XI,Y,K,2)
-#s1 = clock()
-#print('itmlKNN time is ',s1-s0)
-#s0 =s1
-#
+
+K = 5#K for knn
+X,Y = iono_data()
+
+#reduce the dimension
+PCAK = 8
+if  (len(X[0])>PCAK ) :
+    pca = PCA(n_components=PCAK)
+    X = pca.fit_transform(X)	
+
+
+s0 = clock()
+
+Mah_score = ComputeKNNScore(X,Y,K,1)	
+s1 = clock()
+print('OrgKNN p1 time is ',s1-s0)
+s0 = s1
+
+Eud_score = ComputeKNNScore(X,Y,K,2)	
+s1 = clock()
+print('OrgKNN p2 time is ',s1-s0)
+s0 = s1
+
+style = 0
+
+Chq_1_score = ChoqQP(X,Y,style,1,K)
+s1 = clock()
+print('ChqKNN p1 time is ',s1-s0)
+s0 =s1
+
+s0 = s1
+Chq_1_score = ChoqQP(X,Y,style,2,K)
+s1 = clock()
+print('ChqKNN p2 time is ',s1-s0)
+s0 =s1
+
+lmnn = LMNN(k=5, learn_rate=1e-6)
+lmnn.fit(X,Y)
+XL = lmnn.transform(X)
+S_LMNN = ComputeKNNScore(XL,Y,K,2)
+s1 = clock()
+print('lmnnKNN time is ',s1-s0)
+s0 =s1
+
+itml = ITML_Supervised(num_constraints=200)
+itml.fit(X,Y)
+XI = itml.transform(X)
+S_ITML = ComputeKNNScore(XI,Y,K,2)
+s1 = clock()
+print('itmlKNN time is ',s1-s0)
+s0 =s1
+
 #for style in range(1,11,3):
 #    Chq_k_score = ChoqQP(X,Y,style,2,K)
 #    s1 = clock()
@@ -228,80 +229,76 @@ style is (k) for use kadd or (0) for submodular
 
 """
 
-import cvxpy  as cpy
-
-
-def LPloss(x,V,m,pnorm):
-    A = V[0]
-    B = V[1]
-    C = V[2]
-    dim = len(A[0])
-    v =[]
-    for i in range(2**dim):
-        v.append(x[i].value)
-    v = np.array(v,dtype=np.double)
-    loss = 0
-    for i in range(len(A)):
-        t = m+ChoMetric(A[i],B[i],dim = dim,v = v, pnorm = pnorm)
-        t = t-ChoMetric(A[i],C[i],dim = dim,v = v, pnorm = pnorm)
-        loss= loss+t        
-    return loss
-
-#def ChoqLP(X,Y,style,p,K):
-
-p = 1
-K = 5
-style = 0
-X,Y = balance_data()
-   
-X = preprocessing.scale(X)
-m = preprocessing.MinMaxScaler()
-X = m.fit_transform(X)  		
-dim = len(X[0])		
-number_of_constraints = 200
-max_iter = 30
-A = GenerateTriplets(Y,number_of_constraints, max_iter)
-V = (X[A[:,0]],X[A[:,1]],X[A[:,2]])
-#print(V)
-m = 1.0
-
-v = np.arange(0,pow(2,dim))
-v = [bitCount(i) for i in v]
-v = np.array(v,dtype=np.double)
-  		
-# Construct the problem.
-x = []
-for i in range(2**dim):
-    x.append(cpy.Variable())
-    x[i].save_value(v[i])
-objective = cpy.Minimize(LPloss(x,V,m,p))    
-
-#when dim = 4
-cpy.constraints = []
-for i in range(2**dim):
-    cpy.constraints+=[x[i]>=0,x[i]<=1]
-        
-        
-if style == 0 :
-    AZ = submodular(2**dim)
-else:
-    AZ = k_additivity(2**dim,min(style,dim-1))
-AZ = cvx.matrix(AZ)
-
-for i in range(np.shape(AZ)[0]):
-    t = np.array(AZ[i,:],dtype=np.double)
-    cpy.constraints+=[sum(x*t)<=0]
- 
-print('c')
+def ChoqLP(X,Y,style,p,K):
     
-prob = cpy.Problem(objective, cpy.constraints)  
+    X = preprocessing.scale(X)
+    m = preprocessing.MinMaxScaler()
+    X = m.fit_transform(X)  		
+    dim = len(X[0])		
+    number_of_constraints = 200
+    max_iter = 30
+    A=GenerateTriplets(Y,number_of_constraints, max_iter)
+    #print(A)
+    V =GenerateConstraints(A,X,p)
+    #print(V)		
+    A = GenrateSortedConstraints(V)
+    #print(A)
+    m = 1.0
+    bc = cvx.matrix(m,(number_of_constraints,1))	
+    if style == 0 :
+        AZ = submodular(2**dim)
+    else:
+        AZ = k_additivity(2**dim,min(style,dim-1))
+    AZ = cvx.matrix(AZ)
+    bs = cvx.matrix(0.0,(np.shape(AZ)[0],1))
+    #print(AZ)	
+    #AZ, bs, bas = convert2kadd(AZ,bs)		
+    #AP = cvx.matrix([(-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim)),cvx.spmatrix(1.0, range(2**dim), range(2**dim))])
+    #bp = cvx.matrix([cvx.matrix(0.0,(2**dim,1)),cvx.matrix(1.0,(2**dim,1))])		
+    AP = (-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
+    bp = cvx.matrix(0.0,(2**dim,1))
+      		
+    c = cvx.matrix(1.0,(2**dim,1))
+    G = cvx.matrix([A,AZ,AP],tc = 'd')
+    h = cvx.matrix([bc,bs,bp])
+    s = cvx.solvers.lp(c,G,h)
+    mu = s['x']
+    print(mu.T)		
+    score = ComputeScore(X,Y,K,dim,mu,ChoMetric,p)
+    return score
 
-print("Optimal value", prob.solve())
-print("Optimal var")
-mu = [i.value for i in x]
-print(mu) # A numpy matrix.
+#
+#K = 5#K for knn
+#X,Y = glass_data()
+##reduce the dimension
+#PCAK = 8
+#if  (len(X[0])>PCAK ) :
+#    pca = PCA(n_components=PCAK)
+#    X = pca.fit_transform(X)	
 
-mu = np.array(mu,dtype=np.double)
-score = ComputeScore(X,Y,K,dim,mu,ChoMetric,p)
 
-#    return score
+#s0 = clock()
+
+#Mah_score = ComputeKNNScore(X,Y,K,1)	
+#s1 = clock()
+#print('OrgKNN p1 time is ',s1-s0)
+#s0 = s1
+#
+#Eud_score = ComputeKNNScore(X,Y,K,2)	
+#s1 = clock()
+#print('OrgKNN p2 time is ',s1-s0)
+#s0 = s1
+#
+#style = 0
+#
+#Chq_1_score = ChoqLP(X,Y,style,1,K)
+#s1 = clock()
+#print('ChqKNN p1 time is ',s1-s0)
+#s0 =s1
+#
+#s0 = s1
+#Chq_1_score = ChoqLP(X,Y,style,2,K)
+#s1 = clock()
+#print('ChqKNN p2 time is ',s1-s0)
+#s0 =s1
+#
