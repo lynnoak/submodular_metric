@@ -1,4 +1,5 @@
 import numpy as np
+from math import floor
 from sklearn import datasets, preprocessing
 localrep ="./data/" 
 
@@ -17,6 +18,19 @@ def sonar_data():
 def digits_data():
 	digits = datasets.load_digits()
 	return digits.data,digits.target
+
+def mnist_data():
+    mnist = datasets.fetch_mldata('MNIST original')
+    X = mnist.data.astype(np.float64)
+    Y = mnist.target 
+    k = floor(len(X)/3000)
+    p = []
+    for i in range(3000):
+        p.append(i*k+np.random.randint(low=0,high=k))
+    X = X[p]
+    Y = Y[p]
+    return X,Y
+
 def iono_data():
 	file =localrep+"ionosphere.data"
 	X = np.genfromtxt(file,delimiter=",")

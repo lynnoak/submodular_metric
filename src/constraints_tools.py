@@ -4,6 +4,9 @@ Created on Fri Jan  6 14:28:14 2017
 Submodular tool
 @author: victor
 """
+import sys
+sys.path.append("..")
+
 from genutils import *
 from base import *
 from sublearning import *
