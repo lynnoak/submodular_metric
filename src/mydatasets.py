@@ -23,9 +23,9 @@ def mnist_data():
     mnist = datasets.fetch_mldata('MNIST original')
     X = mnist.data.astype(np.float64)
     Y = mnist.target 
-    k = floor(len(X)/3000)
+    k = floor(len(X)/2000)
     p = []
-    for i in range(3000):
+    for i in range(2000):
         p.append(i*k+np.random.randint(low=0,high=k))
     X = X[p]
     Y = Y[p]

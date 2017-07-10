@@ -85,7 +85,6 @@ if  (len(X[0])>PCAK ) :
 
 
 s0 = clock()
-#
 Mah_score = ComputeKNNScore(X,Y,K,1)	
 s1 = clock()
 Mah_t = s1-s0
@@ -98,6 +97,14 @@ Eud_t = s1-s0
 print('OrgKNN p2 time is ',s1-s0)
 s0 = s1
 
+lmnn = LMNN(k=5, learn_rate=1e-6)
+lmnn.fit(X,Y)
+XL = lmnn.transform(X)
+S_LMNN = ComputeKNNScore(XL,Y,K,2)
+s1 = clock()
+LMNN_t = s1-s0
+print('lmnnKNN time is ',s1-s0)
+s0 =s1
 
 itml = ITML_Supervised(num_constraints=200)
 itml.fit(X,Y)
@@ -133,14 +140,6 @@ Chp_2_t = s1-s0
 print('ChqKNN p2 time is ',s1-s0)
 s0 =s1
 
-lmnn = LMNN(k=5, learn_rate=1e-6)
-lmnn.fit(X,Y)
-XL = lmnn.transform(X)
-S_LMNN = ComputeKNNScore(XL,Y,K,2)
-s1 = clock()
-LMNN_t = s1-s0
-print('lmnnKNN time is ',s1-s0)
-s0 =s1
 
 #
 #Chq_k_score = []
