@@ -1,236 +1,326 @@
-import sys
-sys.path.append("./src")
-
-from genutils import *
-from base import *
-from sublearning import *
-import numpy as np
-import timeit
-
-from mydatasets import *
-from time import clock
-from math import log2
-import cvxopt as cvx
-from sklearn import *
-from itertools import *
-from constraints_tools import *
-from metric_computation import *
-
+import time
 from sklearn.decomposition import PCA
-from metric_learn import LMNN,ITML_Supervised,LSML_Supervised
+from metric_learn import *
+from src.mydatasets import *
+from src.mytools import *
+from genutils import *
 
+import pprint
 
-
-"""
-QP Learning functions
-
-p is the power of norm
-style is (k) for use kadd or (0) for submodular
-
-"""
-
-def ChoqQP(X,Y,style,p,K):
-    
-    X = preprocessing.scale(X)
-    m = preprocessing.MinMaxScaler()
-    X = m.fit_transform(X)  		
-    dim = len(X[0])		
-    number_of_constraints = 200
-    max_iter = min(len(X)/2,200)
-    A=GenerateTriplets(Y,number_of_constraints, max_iter)
-    #print(A)
-    V =GenerateConstraints(A,X,p)
-    #print(V)		
-    A = GenrateSortedConstraints(V)
-    #print(A)
-    m = 1.0
-    bc = cvx.matrix(m,(number_of_constraints,1))	
-    if style == 0 :
-        AZ = submodular(2**dim)
-    else:
-        AZ = k_additivity(2**dim,min(style,dim-1))
-    AZ = cvx.matrix(AZ)
-    bs = cvx.matrix(0.0,(np.shape(AZ)[0],1))
-    #print(AZ)	
-    #AZ, bs, bas = convert2kadd(AZ,bs)		
-    #AP = cvx.matrix([(-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim)),cvx.spmatrix(1.0, range(2**dim), range(2**dim))])
-    #bp = cvx.matrix([cvx.matrix(0.0,(2**dim,1)),cvx.matrix(1.0,(2**dim,1))])		
-    AP = (-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
-    bp = cvx.matrix(0.0,(2**dim,1))
-      		
-    a = 0.3
-    P = 2*(1-a)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
-    q = cvx.matrix(a,(2**dim,1))
-    G = cvx.matrix([A,AZ,AP],tc = 'd')
-    h = cvx.matrix([bc,bs,bp])
-    s = cvx.solvers.qp(P,q,G,h)
-    mu = s['x']
-    print(mu.T)		
-    score = ComputeScore(X,Y,K,dim,mu,ChoMetric,p)
-    return score
-       	
 """
 test
 """
 
+mydata = [data_balance(),data_liver(),data_seeds(),data_glass(),data_iono()]#,data_sonar(),data_digits(),data_segment()]
+dataname = ["balance","liver","seeds","glass","iono"]#,"sonar","digits","segment"]
 
-K = 5#K for knn
-X,Y = mnist_data()
+#list_num_constraints = [1,2,3,4,5]
 
-#reduce the dimension
-PCAK = 8
+num_constraints = 100
+S = {}
+
+for i in range(len(mydata)):
+#    for num_constraints in list_num_constraints:
+        X, Y = mydata[i]
+        K = 5
+        PCAK = 10
+        if (len(X[0]) > PCAK):
+            pca = PCA(n_components=PCAK)
+            X = pca.fit_transform(X)
+        style = 0
+        p = 2
+        mu = ChoqQP(X, Y, style, p, num_constraints)
+        Chq_2_score = ColKNNScoreSM(X, Y, K, mu, p, title="Sub. p2 ")
+        S[dataname[i]+str(num_constraints)] = Chq_2_score
+
+saveout = sys.stdout
+file = open('output.txt', 'a')
+sys.stdout = file
+print("\n\n\n-------------------\n")
+print (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())+"\n")
+print("\n-------------------\n\n")
+pprint.pprint(S, width=1)
+print("\n\n\n-------------------\n\n")
+file.close()
+sys.stdout = saveout
+
+"""
+
+i = 0
+X,Y = mydata[i]
+
+S = {}
+K = 5#K for knn3
+num_constraints=10
+
+PCAK = 10
 if  (len(X[0])>PCAK ) :
     pca = PCA(n_components=PCAK)
-    X = pca.fit_transform(X)	
+    X = pca.fit_transform(X)
+
+S['Euc.'] = ColKNNScore(X,Y,K,2,scoring = 'acc',title="Euc.")
 
 
-s0 = clock()
-Mah_score = ComputeKNNScore(X,Y,K,1)	
-s1 = clock()
-Mah_t = s1-s0
-print('OrgKNN p1 time is ',s1-s0)
-s0 = s1
+try: 
+    s0 = time.clock()
+    lmnn = LMNN()
+    lmnn.fit(X,Y)
+    XL = lmnn.transform(X)
+    s1 = time.clock()
+    ttt = s1-s0
+    print("time lmnn:" + str(ttt))
+    S_LMNN = ColKNNScore(XL, Y, K, 2, scoring = 'acc',title="LMNN")
+except:
+    S_LMNN = 0
+    ttt = 0
+    print('LMNN error')
+S['LMNN'] =  S_LMNN
+S['LMNN_time'] = ttt
 
-Eud_score = ComputeKNNScore(X,Y,K,2)	
-s1 = clock()
-Eud_t = s1-s0
-print('OrgKNN p2 time is ',s1-s0)
-s0 = s1
+try:
+    s0 = time.clock()
+    itml = ITML_Supervised(num_constraints=num_constraints)
+    itml.fit(X, Y)
+    XI = itml.transform(X)
+    s1 = time.clock()
+    ttt = s1-s0
+    print("time itml:" + str(ttt))
+    S_ITML = ColKNNScore(XI, Y, K, 2, scoring = 'acc',title="ITML")
+except:
+    S_ITML = 0
+    ttt = 0
+    print('ITML error')
+S['ITML'] =  S_ITML
+S['ITML_time'] = ttt
 
-lmnn = LMNN(k=5, learn_rate=1e-6)
-lmnn.fit(X,Y)
-XL = lmnn.transform(X)
-S_LMNN = ComputeKNNScore(XL,Y,K,2)
-s1 = clock()
-LMNN_t = s1-s0
-print('lmnnKNN time is ',s1-s0)
-s0 =s1
+try:
+    s0 = time.clock()
+    try:
+        lfda = LFDA(k=3)
+        lfda.fit(X, Y)
+    except:
+        lfda = LFDA(dim = int(0.9*(len(X[0]))),k=3,num_constraints=num_constraints)
+        tX = X + 10 ** -4
+        lfda.fit(tX, Y)
+    XL = lfda.transform(X)
+    s1 = time.clock()
+    ttt = s1-s0
+    print("time lfda:" + str(ttt))
+    S_LFDA = ColKNNScore(XL, Y, K, 2, scoring = 'acc',title="LFDA")
+except:
+    print('LFDA error')
+    S_LFDA = 0
+    ttt = 0
+S['LFDA'] =  S_LFDA
+S['LFDA_time'] = ttt
 
-itml = ITML_Supervised(num_constraints=200)
-itml.fit(X,Y)
-XI = itml.transform(X)
-S_ITML = ComputeKNNScore(XI,Y,K,2)
-s1 = clock()
-ITML_t = s1-s0
-print('itmlKNN time is ',s1-s0)
-s0 =s1
 
-lsml = LSML_Supervised(num_constraints=200)
-lsml.fit(X,Y)
-XL = lsml.transform(X)
-S_LSML = ComputeKNNScore(XL,Y,K,2)
-s1 = clock()
-LSML_t = s1-s0
-print('lsmlKNN time is ',s1-s0)
-s0 =s1
+try:
+    s0 = time.clock()
+    lsml = LSML_Supervised(num_constraints=num_constraints)
+    try:
+        lsml.fit(X, Y)
+    except:
+        tX = X + 10 ** -4
+        lsml.fit(tX, Y)
+    XL = lsml.transform(X)
+    s1 = time.clock()
+    ttt = s1-s0
+    print("time lsml:" + str(ttt))
+    S_LSML = ColKNNScore(XL, Y, K, 2, scoring = 'acc',title="LSML")
+except:
+    print('LSML error')
+    S_LSML = 0
+    ttt = 0
+S['LSML'] =  S_LSML
+S['LSML_time'] = ttt
+
+#style = 0
+#p = 1
+#s0 = clock()
+#mu = ChoqQP(X,Y,style,p)
+#s1 = clock()
+#Chq_1_score = ComputeScore(X, Y, K, mu, p, "Sub. p1 ")
+#ttt = s1-s0
+#print("time SubKNN p1:" + str(ttt))
 
 
 style = 0
+p = 2
+s0 = time.clock()
+mu = ChoqQP(X,Y,style,p,num_constraints)
+s1 = time.clock()
+Chq_2_score = ColKNNScoreSM(X, Y, K, mu,p,title="Sub. p2 ")
+ttt = s1-s0
+print("time SubKNN p1:" + str(ttt))
 
-Chq_1_score = ChoqQP(X,Y,style,1,K)
-s1 = clock()
-Chp_1_t = s1-s0
-print('ChqKNN p1 time is ',s1-s0)
-s0 =s1
+S['L_f'] =  Chq_2_score
+S['L_f_time'] = ttt
 
-s0 = s1
-Chq_2_score = ChoqQP(X,Y,style,2,K)
-s1 = clock()
-Chp_2_t = s1-s0
-print('ChqKNN p2 time is ',s1-s0)
-s0 =s1
-
-
-#
 #Chq_k_score = []
 #Chq_k_t = []
 #for style in range(1,len(X[0])+1):
-#    Chq_k_score.append( ChoqQP(X,Y,style,2,K))
+#    s0 = clock()
+#    mu = ChoqQP(X,Y,style,p=2)
 #    s1 = clock()
 #    Chq_k_t.append(s1-s0)
-#    print('kadd',style,'time is',s1-s0)
-#    s0 = s1
+#    Chq_k_score.append(ComputeScore(X, Y, K, mu, pnorm=2,title=str(style)+" add "))
+#    ttt = s1-s0
+#    print(style,'-add time:',s1-s0)
+
+"""
+
 
 
 """
-LP Learning functions
+
+def myRes (X,Y,num_constraints = 100,K = 5,PCAK=10):
+    S = {}
+
+    if (len(X[0]) > PCAK):
+        pca = PCA(n_components=PCAK)
+        X = pca.fit_transform(X)
+
+    S_Euc = ColKNNScore(X, Y, K, 2, scoring='acc', title="Euc.")
+    S['Euc.'] = format(S_Euc['acc'][0],'.2%')+"(+/-)"+format(S_Euc['acc'][1],'.2%')
 
 
-p is the power of norm
-style is (k) for use kadd or (0) for submodular
+#    try:
+#        s0 = time.clock()
+#        lmnn = LMNN()
+#        lmnn.fit(X,Y)
+#        XL = lmnn.transform(X)
+#        s1 = time.clock()
+#        ttt = s1-s0
+#        print("time lmnn:" + str(ttt))
+#        S_LMNN = ColKNNScore(XL, Y, K, 2, scoring = 'acc',title="LMNN")
+#    except:
+#        S_LMNN = 0
+#        ttt = 0
+#        print('LMNN error')
+#    S['LMNN'] =  S_LMNN
+#    S['LMNN_time'] = ttt    
 
+    try:
+        s0 = time.clock()
+        itml = ITML_Supervised(num_constraints=num_constraints)
+        itml.fit(X, Y)
+        XI = itml.transform(X)
+        s1 = time.clock()
+        ttt = s1-s0
+        print("time itml:" + str(ttt))
+        S_ITML = ColKNNScore(XI, Y, K, 2, scoring = 'acc',title="ITML")
+    except:
+        S_ITML = 0
+        ttt = 0
+        print('ITML error')
+    S['ITML'] = format(S_ITML['acc'][0],'.2%')+"(+/-)"+format(S_ITML['acc'][1],'.2%')
+    S['ITML_time'] = format(ttt,'.4g')
+
+    try:
+        s0 = time.clock()
+        try:
+            lfda = LFDA(k=3)
+            lfda.fit(X, Y)
+        except:
+            lfda = LFDA(dim = int(0.9*(len(X[0]))),k=3,num_constraints=num_constraints)
+            tX = X + 10 ** -4
+            lfda.fit(tX, Y)
+        XL = lfda.transform(X)
+        s1 = time.clock()
+        ttt = s1-s0
+        print("time lfda:" + str(ttt))
+        S_LFDA = ColKNNScore(XL, Y, K, 2, scoring = 'acc',title="LFDA")
+    except:
+        print('LFDA error')
+        S_LFDA = 0
+        ttt = 0  
+    S['LFDA'] = format(S_LFDA['acc'][0],'.2%')+"(+/-)"+format(S_LFDA['acc'][1],'.2%')
+    S['LFDA_time'] = format(ttt,'.4g')    
+
+    try:
+        s0 = time.clock()
+        lsml = LSML_Supervised(num_constraints=num_constraints)
+        try:
+            lsml.fit(X, Y)
+        except:
+            tX = X + 10 ** -4
+            lsml.fit(tX, Y)
+        XL = lsml.transform(X)
+        s1 = time.clock()
+        ttt = s1-s0
+        print("time lsml:" + str(ttt))
+        S_LSML = ColKNNScore(XL, Y, K, 2, scoring = 'acc',title="LSML")
+    except:
+        print('LSML error')
+        S_LSML = 0
+        ttt = 0
+    S['LSML'] = format(S_LSML['acc'][0],'.2%')+"(+/-)"+format(S_LSML['acc'][1],'.2%')
+    S['LSML_time'] = format(ttt,'.4g')    
+
+    try:
+        style = 0
+        p = 2
+        s0 = time.clock()
+        mu = ChoqQP(X,Y,style,p,num_constraints)
+        s1 = time.clock()
+        L_f = ColKNNScoreSM(X, Y, K, mu,p,title="Sub. p2 ")
+        ttt = s1-s0
+        print("time Sub p1:" + str(ttt)) 
+    except:
+        print('Sub error')
+        L_f = 0
+        ttt = 0
+
+    S['L_f'] = format(L_f['acc'][0],'.2%')+"(+/-)"+format(L_f['acc'][1],'.2%')
+    S['L_f_time'] = format(ttt,'.4g')  
+
+    return S
+
+
+
+def myRes (X,Y,num_constraints = 100,K = 5,PCAK=10):
+    S = {}
+
+    if (len(X[0]) > PCAK):
+        pca = PCA(n_components=PCAK)
+        X = pca.fit_transform(X)
+
+    for style in range(2,len(X[0])+1):
+        s0 = time.clock()
+        mu = ChoqQP(X, Y, style, p=2, num_constraints = num_constraints)
+        s1 = time.clock()
+        ttt = s1-s0
+        print(style,'-add time:',ttt)
+        S[style] = str(style)+'-add time:'+str(ttt)
+
+    return S
+
+#mydata = [data_balance(),data_seeds(),data_glass(),data_iono(),data_digits(),data_segment(),data_liver(),data_sonar()]
+#dataname = ["balance","seeds","glass","iono","digits","segment","liver","sonar"]
+
+mydata = [data_balance(),data_seeds(),data_glass(),data_iono(),data_segment()]
+dataname = ["balance","seeds","glass","iono","segment"]
+
+#list_num_constraints = [350,400,450,500]
+num_constraints =200
+
+for i in range(len(mydata)):
+#    for num_constraints in list_num_constraints:
+        X,Y = mydata[i]
+        S = myRes(X,Y,num_constraints)
+        saveout = sys.stdout
+        file = open('output.txt','a')
+        sys.stdout = file       
+        print("\n\n\n-------------------\n")
+        #print (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())+"\n")
+        print("Dataset "+ dataname[i]+"\n")
+        print(num_constraints)
+        print("\n-------------------\n\n")
+        pprint.pprint(S,width=1)
+        print("\n\n\n-------------------\n\n")
+        file.close()
+        sys.stdout = saveout
 """
-#
-#def ChoqLP(X,Y,style,p,K):
-#    
-#    X = preprocessing.scale(X)
-#    m = preprocessing.MinMaxScaler()
-#    X = m.fit_transform(X)  		
-#    dim = len(X[0])		
-#    number_of_constraints = 200
-#    max_iter = 30
-#    A=GenerateTriplets(Y,number_of_constraints, max_iter)
-#    #print(A)
-#    V =GenerateConstraints(A,X,p)
-#    #print(V)		
-#    A = GenrateSortedConstraints(V)
-#    #print(A)
-#    m = 1.0
-#    bc = cvx.matrix(m,(number_of_constraints,1))	
-#    if style == 0 :
-#        AZ = submodular(2**dim)
-#    else:
-#        AZ = k_additivity(2**dim,min(style,dim-1))
-#    AZ = cvx.matrix(AZ)
-#    bs = cvx.matrix(0.0,(np.shape(AZ)[0],1))
-#    #print(AZ)	
-#    #AZ, bs, bas = convert2kadd(AZ,bs)		
-#    #AP = cvx.matrix([(-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim)),cvx.spmatrix(1.0, range(2**dim), range(2**dim))])
-#    #bp = cvx.matrix([cvx.matrix(0.0,(2**dim,1)),cvx.matrix(1.0,(2**dim,1))])		
-#    AP = (-1)*cvx.spmatrix(1.0, range(2**dim), range(2**dim))
-#    bp = cvx.matrix(0.0,(2**dim,1))
-#      		
-#    c = cvx.matrix(1.0,(2**dim,1))
-#    G = cvx.matrix([A,AZ,AP],tc = 'd')
-#    h = cvx.matrix([bc,bs,bp])
-#    s = cvx.solvers.lp(c,G,h)
-#    mu = s['x']
-#    print(mu.T)		
-#    score = ComputeScore(X,Y,K,dim,mu,ChoMetric,p)
-#    return score
 
-#
-#K = 5#K for knn
-#X,Y = iono_data()
-##reduce the dimension
-#PCAK = 8
-#if  (len(X[0])>PCAK ) :
-#    pca = PCA(n_components=PCAK)
-#    X = pca.fit_transform(X)	
-#
-#
-#s0 = clock()
-#
-##Mah_score = ComputeKNNScore(X,Y,K,1)	
-##s1 = clock()
-##print('OrgKNN p1 time is ',s1-s0)
-##s0 = s1
-##
-##Eud_score = ComputeKNNScore(X,Y,K,2)	
-##s1 = clock()
-##print('OrgKNN p2 time is ',s1-s0)
-##s0 = s1
-##
-#style = 0
-#
-#Chq_1_score = ChoqLP(X,Y,style,1,K)
-#s1 = clock()
-#print('ChqKNN p1 time is ',s1-s0)
-#s0 =s1
-#
-#s0 = s1
-#Chq_1_score = ChoqLP(X,Y,style,2,K)
-#s1 = clock()
-#print('ChqKNN p2 time is ',s1-s0)
-#s0 =s1
 
