@@ -4,9 +4,6 @@ Created on Fri Jan  6 14:28:14 2017
 Submodular tool
 @author: victor
 """
-import sys
-sys.path.append("..")
-
 from base import *
 from sublearning import *
 
@@ -14,8 +11,6 @@ import numpy as np
 import cvxopt as cvx
 from itertools import *
 from math import *
-
-
 
 def LovaszSort(X):
     dim = len(X)
@@ -26,7 +21,6 @@ def LovaszSort(X):
         Sor_X[sum(perm[i:])] += X[pp[i]]
         Sor_X[sum(perm[i + 1:])] -= X[pp[i]]
     return Sor_X
-
 
 def GenrateLovaszConstraints(V):
     A1 = abs(V[0])
@@ -42,7 +36,7 @@ def GenrateLovaszConstraints(V):
 
 def submodular(m):
     """
-    Input: m = 2^dim. 
+    Input: m = 2^dim.
     Output: matrix with v(AuB) + v(AnB) - v(A) - v(B) for all A,B \in N
     """
     x = []
@@ -57,7 +51,7 @@ def submodular(m):
                 J.extend([seta | setb, seta & setb, seta, setb])
                 j = j+1
     A = cvx.spmatrix(x,I,J,size = (max(I)+1,m))
-    return A   
+    return A
 
 def monotonicity(m):
     """
@@ -127,6 +121,10 @@ def k_additivity(m,k):
     
 """
 
+"""
+Multi-linear Extension
+"""
+
 def MLSort(X):
     dim = len(X)
     Sor_X = np.zeros(2**dim, dtype = np.float64)
@@ -138,7 +136,6 @@ def MLSort(X):
         Sor_X[i] = np.prod(tt)
 
     return Sor_X
-
 
 def GenrateMLConstraints(V):
     A1 = abs(V[0])
