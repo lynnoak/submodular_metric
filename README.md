@@ -1,8 +1,5 @@
-<<<<<<< HEAD
+
 Metric Learning with Submodular Functions
-=======
-Metric Learning based on submodular function  
-=====
 
 ## Abstract
 
@@ -15,8 +12,3 @@ Python 3.6
   numpy 1.14.3 <br>
   cvxopt 1.2.0 <br>
   scikit-learn 0.19.1 <br>
-
-
-
-
->>>>>>> 837ed85a25f0b29a22b650b642ec4f7d636ab84f
