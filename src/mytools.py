@@ -7,7 +7,7 @@ Created on Tue Jan 10 14:45:29 2017
 metric computation
 
 """
-from src.metric_computation import *
+from src.submodular import *
 from src.constraints_tools import *
 
 """
@@ -19,42 +19,7 @@ style is (k) for use kadd or (0) for submodular
 """
 
 
-def ChoqQP(X, Y, style, p, num_constraints):
-    X = preprocessing.scale(X)
-    m = preprocessing.MinMaxScaler()
-    X = m.fit_transform(X)
-    dim = len(X[0])
-    max_iter = min(len(X) / 2, 200)
 
-
-    if style == 0:
-        AZ = submodular(2 ** dim)
-    else:
-        AZ = k_additivity(2 ** dim, min(style, dim - 1))
-    bs = cvx.matrix(0.0, (AZ.size[0], 1))
-
-    AP = (-1) * cvx.spmatrix(1.0, range(2 ** dim), range(2 ** dim))
-    bp = cvx.matrix(0.0, (2 ** dim, 1))
-
-    if(num_constraints<100):
-        num_constraints = int(max(num_constraints *AZ.size[0],2))
-
-    A = GenerateTriplets(Y, num_constraints, max_iter)
-    V = GenerateConstraints(A, X, p)
-    A = GenrateLovaszConstraints(V)
-
-    a = 0.3
-    P = 2 * (1 - a) * cvx.spmatrix(1.0, range(2 ** dim), range(2 ** dim))
-    q = cvx.matrix(a, (2 ** dim, 1))
-    G = cvx.matrix([A, AZ, AP], tc='d')
-    margin = 1.0
-    bc = cvx.matrix(margin, (num_constraints, 1))
-    h = cvx.matrix([bc, bs, bp])
-    s = cvx.solvers.qp(P, q, G, h)
-    mu = s['x']
-    print(mu.T)
-
-    return mu
 
 
 
