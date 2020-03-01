@@ -2,7 +2,6 @@ import time
 from sklearn.decomposition import PCA
 from metric_learn import *
 from src.mydatasets import *
-from src.mytools import *
 from genutils import *
 
 import pprint

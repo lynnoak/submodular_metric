@@ -188,6 +188,3 @@ def my3Dplot(X, y, title=" "):
 
     plt.savefig(title)
     plt.show()
-
-
-

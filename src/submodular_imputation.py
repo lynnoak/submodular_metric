@@ -1,8 +1,5 @@
-
 from src.submodular import *
 from src.myImputationTools import *
-
-
 
 X_nan,y = data_mcar(X,y)
 
@@ -73,8 +70,3 @@ class SubmodularWithNan (Submodular):
         S['Submodular with nan'] = CKS.ColKNNScore(self.X_nan,self.y,title=title)
 
         return  S
-
-
-
-
-
