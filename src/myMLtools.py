@@ -14,6 +14,7 @@ from sklearn.neighbors import *
 from sklearn.metrics import *
 
 from metric_learn import *
+import time
 
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import normalize
@@ -98,6 +99,7 @@ class NormalML(KNN_score):
     MLerror = {}
     X_ML = {}
     metricLearnt = {}
+    MLtime ={}
     def __init__(self,alg=['NCA'], X=X, y=y, num_constraints=100,n_neighbors = 5 ,P_power = 2, scoring = ['acc'], metric = 'minkowski', metric_params={}):
         super(NormalML,self).__init__(n_neighbors,P_power,scoring, metric, metric_params)
         X = normalize(X,axis=0)
@@ -123,6 +125,7 @@ class NormalML(KNN_score):
                   'LMNN': LMNN()}
         for i in self.alg:
             algmodel = ditalg[i]
+            time_start = time.clock()
             try:
                 try:
                     algmodel.fit(X, y)
@@ -138,10 +141,18 @@ class NormalML(KNN_score):
                 self.X_ML[i] = X
                 self.metricLearnt[i] = error_metric
 
+            time_end = time.clock()
+            self.MLtime[i] = str(time_start - time_end)
+
     def GetPara(self):
         print(self.alg)
         print(self.MLerror)
         return self.__dict__
+
+    def ShowTime(self):
+        for i in self.alg:
+            print("Learning Time for "+i+" is " + self.MLtime[i])
+            print('\n')
 
     def ColKNNScore(self):
         S = {}

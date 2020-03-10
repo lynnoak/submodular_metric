@@ -31,6 +31,8 @@ class Submodular(object):
         dim = len(X[0])
         max_iter = min(len(X) / 2, 200)
 
+        time_start =time.clock()
+
         if style == 0:
             AZ = submodular(2 ** dim)
         else:
@@ -55,11 +57,22 @@ class Submodular(object):
         bc = cvx.matrix(margin, (num_constraints, 1))
         h = cvx.matrix([bc, bs, bp])
         s = cvx.solvers.qp(P, q, G, h)
+
+        time_end =time.clock()
+        self.SMtime =str(time_start-time_end)
         self.SMmetric = s['x']
 
     def GetPara(self):
         print(self.style)
         print(self.SMmetric)
+
+    def ShowTime(self):
+        if self.style == 0:
+            print("Learning Time for Submodular is " + self.SMtime)
+            print('\n')
+        else:
+            print("Learning Time for "+ str(self.style)+"-additivity is " + self.SMtime)
+            print('\n')
 
     def ChoMetric(self, X1, X2):
         """
@@ -84,7 +97,7 @@ class Submodular(object):
         if self.style ==0:
             title ="Submodular"
         else:
-            title = str(self.style)+" additivity"
+            title = str(self.style)+"-additivity"
 
         metric = 'pyfunc'
         metric_params = {"func":self.ChoMetric}
